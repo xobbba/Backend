@@ -3,11 +3,16 @@ from dateutil import parser
 from dateutil.relativedelta import relativedelta
 from ..pydantic_models import SignUp, SignIn
 from ..models import engine, Session, User
-from ..main import app
-from fastapi import HTTPException
+from fastapi import HTTPException, APIRouter
+from ..auth.auth_hadler import signJWT
+import bcrypt
+
+BCRYPT_SALT = b'$2b$12$o2rj9W4ToE/NRwb1vIit9.'
+
+route_user = APIRouter()
 
 
-@app.post('/signup')
+@route_user.post('/signup')
 async def signup(q: SignUp):
     try:
         user = Session().query(User).filter_by(login=q.login).first()
@@ -20,7 +25,7 @@ async def signup(q: SignUp):
                         age=int(relativedelta(datetime.now().date(), parser.parse(q.date_birth).date()).years),
                         employer=q.employer,
                         login=q.login,
-                        password=q.password,
+                        password=bcrypt.hashpw(q.password.encode(), BCRYPT_SALT),
                         skills=q.skills,
                         hobby=q.hobby)
 
@@ -34,17 +39,17 @@ async def signup(q: SignUp):
         raise HTTPException(status_code=501)
 
 
-@app.post('/signin')
+@route_user.post('/signin')
 async def signin(q: SignIn):
     try:
         user = Session().query(User).filter_by(login=q.login).first()
         if user is None:
             raise HTTPException(status_code=401,
                                 detail='Пользователя с таким логином не существует')  # посмотреть код ошибки
-        if user.password != q.password:
+        if bcrypt.checkpw(q.password.encode(), user.password):
             raise HTTPException(status_code=401,
                                 detail='Неверный пароль.')
-        return 'OK'
+        return signJWT(user.login)
     except Exception as ex:
         print(ex)
-        raise HTTPException(status_code=501)
+        raise HTTPException(status_code=500)
