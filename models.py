@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, create_engine, Date, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, create_engine, Date, Boolean, select
 from sqlalchemy.orm import sessionmaker, relationship
 
 SQLALCHEMY_DB_URI = 'sqlite:///DB.db'
@@ -25,6 +25,21 @@ class User(Base):
     def __repr__(self):
         return f'{"Работодатель" if self.employer else "Работник"}, {self.id}, {self.full_name}, ' \
                f'{self.sex}, {self.date_birth}, {self.age}, {self.login}'
+
+
+class LikeUsersList(Base):
+    __tablename__ = 'LikeUsersList'
+
+    like_id = Column(Integer, primary_key=True, autoincrement=True)
+    id_employer = Column(Integer, ForeignKey('user.id'))
+    id_user = Column(Integer, ForeignKey('user.id'))
+    like = Column(Boolean)
+
+    def __repr__(self):
+        return f'{self.id_employer}, {self.id_user}, {self.like}'
+
+    def like_user_list(self):
+        return select()
 
 
 Base.metadata.create_all(bind=engine)

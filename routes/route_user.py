@@ -1,10 +1,10 @@
 from datetime import datetime
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
-from ..pydantic_models import SignUp, SignIn
-from ..models import engine, Session, User
+from pydantic_models import SignUp, SignIn
+from models import Session, User
 from fastapi import HTTPException, APIRouter
-from ..auth.auth_hadler import signJWT
+from auth.auth_hadler import signJWT
 import bcrypt
 
 BCRYPT_SALT = b'$2b$12$o2rj9W4ToE/NRwb1vIit9.'
@@ -17,7 +17,7 @@ async def signup(q: SignUp):
     try:
         user = Session().query(User).filter_by(login=q.login).first()
         if user is not None:
-            raise HTTPException(status_code=401,
+            raise HTTPException(status_code=400,
                                 detail='Пользователь с таким логином уже существует')  # посмотреть код ошибки
         new_user = User(full_name=q.full_name,
                         sex=q.sex,
@@ -35,7 +35,6 @@ async def signup(q: SignUp):
 
         return 'OK'
     except Exception as ex:
-        print(ex)
         raise HTTPException(status_code=501)
 
 
@@ -44,12 +43,12 @@ async def signin(q: SignIn):
     try:
         user = Session().query(User).filter_by(login=q.login).first()
         if user is None:
-            raise HTTPException(status_code=401,
-                                detail='Пользователя с таким логином не существует')  # посмотреть код ошибки
-        if bcrypt.checkpw(q.password.encode(), user.password):
+            raise HTTPException(status_code=401, detail='Пользователя с таким логином не существует')  # посмотреть код ошибки
+        if bcrypt.hashpw(q.password.encode(), BCRYPT_SALT) == user.password:
             raise HTTPException(status_code=401,
                                 detail='Неверный пароль.')
-        return signJWT(user.login)
+        return {'token': signJWT(user.login, user.employer, user.id)}
     except Exception as ex:
-        print(ex)
-        raise HTTPException(status_code=500)
+        return {
+                    'error': ex
+                }
