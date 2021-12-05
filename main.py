@@ -1,11 +1,12 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import Depends, FastAPI
 
-from backend.auth.auth_bearer import JWTBearer
-from .routes.route_user import route_user
+from auth.auth_bearer import JWTBearer
+from routes.route_user import route_user
+from routes.router_list import router_list
 
-if __name__ == '__main__':
-    app = FastAPI()
+app = FastAPI()
 
-    app.include_router(route_user, prefix='/auth')
+app.include_router(route_user, prefix='/auth')
+app.include_router(router_list, prefix='/like_list', dependencies=[Depends(JWTBearer())])
 
-    # app.include_router(router, prefix='', dependencies=[Depends(JWTBearer())])
+# app.include_router(router, prefix='', dependencies=[Depends(JWTBearer())])
