@@ -59,4 +59,3 @@ def userLikes(request: Request):
     if likes:
         return likes
     raise HTTPException(status_code=401, detail="Not likes")
-

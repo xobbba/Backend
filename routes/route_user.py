@@ -36,6 +36,7 @@ async def signup(q: SignUp):
     return 'OK'
 
 
+
 @route_user.post('/signin')
 async def signin(q: SignIn):
     user = Session().query(User).filter_by(login=q.login).first()
@@ -47,4 +48,3 @@ async def signin(q: SignIn):
         raise HTTPException(status_code=401, detail='Неправильный пароль')
 
     return {'token': signJWT(user.login, user.employer, user.id)}
-

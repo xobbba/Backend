@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI, Depends
 
 from auth.auth_bearer import JWTBearer
 from routes.route_user import route_user
